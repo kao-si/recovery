@@ -90,7 +90,8 @@ geom_point(aes(shape = treat), size = 3) +
 geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.1) +
 scale_linetype_manual(values = c("dashed", "solid")) +
 scale_x_discrete(labels = paste0("T", 1:8)) +
-ylim(c(2.5, 6)) +
+scale_y_continuous(limits = c(2.5, 5.7),
+labels = scales::label_number(accuracy = 0.1)) +
 labs(
     x = "Enjoyment Rating Overtime",
     y = "Mean Enjoyment Rating"
@@ -110,8 +111,9 @@ geom_line(aes(linetype = treat), linewidth = 0.8, show.legend = FALSE) +
 geom_point(aes(shape = treat), size = 3) +
 geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.03) +
 scale_linetype_manual(values = c("dashed", "solid")) +
-scale_x_discrete(labels = c("T8", "Recovery\n(About 10 Minutes Later)")) +
-ylim(c(2.5, 6)) +
+scale_x_discrete(labels = c("T8", "Recovery\n(About 10 minutes later)")) +
+scale_y_continuous(limits = c(2.5, 5.7),
+labels = scales::label_number(accuracy = 0.1)) +
 labs(
     x = "Enjoyment Rating Overtime",
     y = "Mean Enjoyment Rating"
@@ -127,7 +129,7 @@ theme(
 fig1 <- fig1_a + fig1_b +
 plot_annotation(
     tag_levels = "A",
-    title = "Hedonic adaptation and recovery (Study 1)",
+    title = "Hedonic adaptation and recovery, Study 1",
     caption = "Error bars represent ± 1 standard error."
 ) &
 theme(
@@ -178,3 +180,158 @@ psych::describeBy(list(T1 = s1$enjoy1, T8 = s1$enjoy8), group = s1$treat)
 t.test(enjoy1 ~ treat, s1, var.equal = TRUE)
 
 t.test(enjoy8 ~ treat, s1, var.equal = TRUE)
+
+# Study 2 ####
+
+## Method ====
+
+# Load data
+s2 <- haven::read_sav("Data_Main-Effect.sav") %>% filter(failed_ins == 0)
+
+# Summary statistics of gender and age
+table(s2$male)
+
+psych::describe(s2$age)
+
+# Correlation between the two recovery items
+cor.test(s2$recover1, s2$recover2)
+
+# Correlation between the two items of perceived lack of autonomy
+cor.test(s2$autnm1, s2$autnm2)
+
+# Variable construction
+s2 <- s2 %>%
+mutate(
+    # recovery measure
+    recover = rowMeans(select(., recover1, recover2), na.rm = TRUE),
+    # perceived lack of autonomy of choice
+    lack_autnm = rowMeans(select(., autnm1, autnm2), na.rm = TRUE),
+    # time elapsed until recovery measure
+    timeelap = difftime(time2, time1, units = "hours")
+)
+
+# Factor variables
+s2$treat  <- factor(s2$treat, levels = c(0, 1),
+labels = c("Control", "Imposed Choice"))
+
+## Figure 2 ====
+
+# Construct data frame for plotting
+s2_mean <- s2 %>%
+pivot_longer(
+    cols = c(enjoy1:enjoy8, recover),
+    names_to = "time",
+    values_to = "rating"
+) %>%
+group_by(treat, time) %>%
+summarize(
+    mean = mean(rating, na.rm = TRUE),
+    se = plotrix::std.error(rating, na.rm = TRUE)
+) %>%
+ungroup()
+
+# Figure 2A: Hedonic adaptation
+fig2_a <- s2_mean %>%
+filter(time != "recover") %>%
+ggplot(aes(time, mean, group = treat)) +
+geom_line(aes(linetype = treat), linewidth = 0.8, show.legend = FALSE) +
+geom_point(aes(shape = treat), size = 3) +
+geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.1) +
+scale_linetype_manual(values = c("dashed", "solid")) +
+scale_x_discrete(labels = paste0("T", 1:8)) +
+scale_y_continuous(limits = c(2.6, 4.3),
+labels = scales::label_number(accuracy = 0.1)) +
+labs(
+    x = "Enjoyment Rating Overtime",
+    y = "Mean Enjoyment Rating"
+) +
+ggpubr::theme_pubr() +
+theme(
+    text = element_text(size = 14),
+    legend.text = element_text(size = 14),
+    legend.title = element_blank()
+)
+
+# Figure 2B: Recovery
+fig2_b <- s2_mean %>%
+filter(time %in% c("enjoy8", "recover")) %>%
+ggplot(aes(time, mean, group = treat)) +
+geom_line(aes(linetype = treat), linewidth = 0.8, show.legend = FALSE) +
+geom_point(aes(shape = treat), size = 3) +
+geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.03) +
+scale_linetype_manual(values = c("dashed", "solid")) +
+scale_x_discrete(
+    labels = c("T8", "Recovery\n(On average around 3 hours later)")
+) +
+scale_y_continuous(limits = c(2.6, 4.3),
+labels = scales::label_number(accuracy = 0.1)) +
+labs(
+    x = "Enjoyment Rating Overtime",
+    y = "Mean Enjoyment Rating"
+) +
+ggpubr::theme_pubr() +
+theme(
+    text = element_text(size = 14),
+    legend.text = element_text(size = 14),
+    legend.title = element_blank()
+)
+
+# Combine Figures 2A and 2B
+fig2 <- fig2_a + fig2_b +
+plot_annotation(
+    tag_levels = "A",
+    title = "Hedonic adaptation and recovery, Study 2",
+    caption = "Error bars represent ± 1 standard error."
+) &
+theme(
+    plot.title = element_text(size = 14),
+    plot.caption = element_text(size = 12)
+)
+
+## Table 2 ====
+
+# Model 1, baseline model
+s2_lm1 <- lm(recover ~ treat + enjoy8, s2)
+
+summary(s2_lm1)
+
+# Model 2, controlling for time elapsed until recovery measure
+s2_lm2 <- lm(recover ~ treat + enjoy8 + timeelap, s2)
+
+# Table 2
+modelsummary(
+    list(s2_lm1, s2_lm2),
+    stars = c("*" = .05, "**" = .01, "***" = .001),
+    gof_omit = "^R2$|AIC|BIC|Log.Lik.|F|RMSE",
+    coef_map = c(
+        "(Intercept)" = "Constant",
+        "treatImposed Choice" = "Imposed Choice",
+        "enjoy8" = "Previous Enjoyment",
+        "timeelap" = "Time Elapsed"
+    ),
+    title = "Table 2. Results of Study 2",
+    notes = "Numbers in parentheses represent standard errors.",
+    output = "markdown"
+)
+
+## Other Analyses ====
+
+# T1 & T8 enjoyment ratings, perceived lack of autonomy, and
+# time elapsed until recovery measure
+psych::describeBy(list(
+    T1 = s2$enjoy1,
+    T8 = s2$enjoy8,
+    TE = as.numeric(s2$timeelap),
+    LA = s2$lack_autnm
+),
+group = s2$treat)
+
+psych::describe(as.numeric(s2$timeelap))
+
+t.test(enjoy1 ~ treat, s2, var.equal = TRUE)
+
+t.test(enjoy8 ~ treat, s2, var.equal = TRUE)
+
+t.test(timeelap ~ treat, s2, var.equal = TRUE)
+
+t.test(lack_autnm ~ treat, s2, var.equal = TRUE)
