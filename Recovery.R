@@ -1,5 +1,5 @@
 
-# Autonomy and Recovery from Hedonic Adaptation
+# Lack of Autonomy and Spontaneous Recovery from Hedonic Decline
 
 # Load packages
 library(tidyverse)
@@ -7,8 +7,6 @@ library(patchwork)
 library(modelsummary)
 
 # Study 1 ####
-
-## Method ====
 
 # Load data
 s1 <- haven::read_sav("Data_Main-Effect-Choice.sav") %>% filter(failed_ins == 0)
@@ -26,22 +24,21 @@ s1 <- s1 %>%
 mutate(
     # treatment condition
     treat = case_when(
-        item_chosen == item_eaten ~ 0,
-        item_chosen != item_eaten ~ 1
+        item_chosen == item_eaten ~ "Free Choice",
+        item_chosen != item_eaten ~ "Forced Choice"
     ),
-    # recovery measure
+    # spontaneous recovery
     recover = rowMeans(select(., recover1, recover2), na.rm = TRUE)
 )
 
 # Factor variables
-s1$treat <- factor(s1$treat, levels = c(0, 1),
-labels = c("Free Choice", "Imposed Choice"))
-
 s1$item_chosen <- factor(s1$item_chosen, levels = c(1, 2),
 labels = c("Alphabet Cookies", "Animal Cookies"))
 
 s1$item_eaten <- factor(s1$item_eaten, levels = c(1, 2),
 labels = c("Alphabet Cookies", "Animal Cookies"))
+
+s1$treat <- factor(s1$treat, levels = c("Free Choice", "Forced Choice"))
 
 # Treatment distribution
 table(s1$treat)
@@ -75,7 +72,7 @@ scale_y_continuous(limits = c(2.5, 5.7),
 labels = scales::label_number(accuracy = 0.1)) +
 labs(
     x = "Enjoyment Rating Overtime",
-    y = "Mean Enjoyment Rating"
+    y = "Average Enjoyment Rating"
 ) +
 ggpubr::theme_pubr() +
 theme(
@@ -84,7 +81,7 @@ theme(
     legend.title = element_blank()
 )
 
-# Figure 1B: Recovery
+# Figure 1B: Spontaneous recovery
 fig1_b <- s1_mean %>%
 filter(time %in% c("enjoy8", "recover")) %>%
 ggplot(aes(time, mean, group = treat)) +
@@ -92,13 +89,12 @@ geom_line(aes(linetype = treat), linewidth = 0.8, show.legend = FALSE) +
 geom_point(aes(shape = treat), size = 5) +
 geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.03) +
 scale_linetype_manual(values = c("dashed", "solid")) +
-scale_x_discrete(labels =
-c("T8", "Recovery Measure\n(About 10 minutes later)")) +
+scale_x_discrete(labels = c("T8", "Recovery")) +
 scale_y_continuous(limits = c(2.5, 5.7),
 labels = scales::label_number(accuracy = 0.1)) +
 labs(
     x = "Enjoyment Rating Overtime",
-    y = "Mean Enjoyment Rating"
+    y = "Average Enjoyment Rating"
 ) +
 ggpubr::theme_pubr() +
 theme(
@@ -111,13 +107,18 @@ theme(
 fig1 <- fig1_a + fig1_b +
 plot_annotation(
     tag_levels = "A",
-    title = "Hedonic decline (A) and recovery (B), Study 1",
-    caption = "Error bars represent ± 1 standard error."
+    title = "Hedonic Decline (A) and Spontaneous Recovery (B), Study 1",
+    caption =
+    "Spontaneous recovery was measured about 10 minutes after T8.\nError bars represent ± 1 standard error."
 ) &
 theme(
     plot.title = element_text(size = 14),
     plot.caption = element_text(size = 12)
 )
+
+# Export figure
+ggsave(plot = fig1, filename = "figures/fig1.png",
+width = 18, height = 9)
 
 ## Table 1 ====
 
@@ -139,7 +140,7 @@ modelsummary(
     gof_omit = "^R2$|AIC|BIC|Log.Lik.|F|RMSE",
     coef_map = c(
         "(Intercept)" = "Constant",
-        "treatImposed Choice" = "Imposed Choice",
+        "treatForced Choice" = "Forced Choice",
         "enjoy8" = "Previous Enjoyment",
         "item_chosenAnimal Cookies" = "Item Chosen",
         "item_eatenAnimal Cookies" = "Item Eaten"
@@ -160,8 +161,6 @@ t.test(enjoy8 ~ treat, s1, var.equal = TRUE)
 
 # Study 2 ####
 
-## Method ====
-
 # Load data
 s2 <- haven::read_sav("Data_Main-Effect.sav") %>% filter(failed_ins == 0)
 
@@ -179,17 +178,17 @@ cor.test(s2$autnm1, s2$autnm2)
 # Variable construction
 s2 <- s2 %>%
 mutate(
-    # recovery measure
+    # spontaneous recovery
     recover = rowMeans(select(., recover1, recover2), na.rm = TRUE),
-    # perceived lack of autonomy of choice
+    # perceived lack of autonomy
     lack_autnm = rowMeans(select(., autnm1, autnm2), na.rm = TRUE),
-    # time elapsed until recovery measure
+    # time elapsed between two sessions
     time_elap = difftime(time2, time1, units = "hours")
 )
 
 # Factor treatment variable
 s2$treat  <- factor(s2$treat, levels = c(0, 1),
-labels = c("Control", "Imposed Choice"))
+labels = c("Control", "Substituted Choice"))
 
 ## Figure 2 ====
 
@@ -220,7 +219,7 @@ scale_y_continuous(limits = c(2.6, 4.3),
 labels = scales::label_number(accuracy = 0.1)) +
 labs(
     x = "Enjoyment Rating Overtime",
-    y = "Mean Enjoyment Rating"
+    y = "Average Enjoyment Rating"
 ) +
 ggpubr::theme_pubr() +
 theme(
@@ -229,7 +228,7 @@ theme(
     legend.title = element_blank()
 )
 
-# Figure 2B: Recovery
+# Figure 2B: Spontaneous recovery
 fig2_b <- s2_mean %>%
 filter(time %in% c("enjoy8", "recover")) %>%
 ggplot(aes(time, mean, group = treat)) +
@@ -237,14 +236,12 @@ geom_line(aes(linetype = treat), linewidth = 0.8, show.legend = FALSE) +
 geom_point(aes(shape = treat), size = 5) +
 geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.03) +
 scale_linetype_manual(values = c("dashed", "solid")) +
-scale_x_discrete(
-    labels = c("T8", "Recovery Measure\n(On average 3 hours and\n20 minutes later)")
-) +
+scale_x_discrete(labels = c("T8", "Recovery")) +
 scale_y_continuous(limits = c(2.6, 4.3),
 labels = scales::label_number(accuracy = 0.1)) +
 labs(
     x = "Enjoyment Rating Overtime",
-    y = "Mean Enjoyment Rating"
+    y = "Average Enjoyment Rating"
 ) +
 ggpubr::theme_pubr() +
 theme(
@@ -257,13 +254,18 @@ theme(
 fig2 <- fig2_a + fig2_b +
 plot_annotation(
     tag_levels = "A",
-    title = "Hedonic decline (A) and recovery (B), Study 2",
-    caption = "Error bars represent ± 1 standard error."
+    title = "Hedonic Decline (A) and Spontaneous Recovery (B), Study 2",
+    caption =
+    "On average, spontaneous recovery was measured around 3 hours after T8.\nError bars represent ± 1 standard error."
 ) &
 theme(
     plot.title = element_text(size = 14),
     plot.caption = element_text(size = 12)
 )
+
+# Export figure
+ggsave(plot = fig2, filename = "figures/fig2.png",
+width = 18, height = 9)
 
 ## Table 2 ====
 
@@ -272,7 +274,7 @@ s2_lm1 <- lm(recover ~ treat + enjoy8, s2)
 
 summary(s2_lm1)
 
-# Model 2, controlling for time elapsed until recovery measure
+# Model 2, controlling for time elapsed between two sessions
 s2_lm2 <- lm(recover ~ treat + enjoy8 + time_elap, s2)
 
 # Table 2
@@ -282,7 +284,7 @@ modelsummary(
     gof_omit = "^R2$|AIC|BIC|Log.Lik.|F|RMSE",
     coef_map = c(
         "(Intercept)" = "Constant",
-        "treatImposed Choice" = "Imposed Choice",
+        "treatSubstituted Choice" = "Substituted Choice",
         "enjoy8" = "Previous Enjoyment",
         "time_elap" = "Time Elapsed"
     ),
@@ -294,7 +296,7 @@ modelsummary(
 ## Other Analyses ====
 
 # T1 & T8 enjoyment ratings, perceived lack of autonomy, and
-# time elapsed until recovery measure
+# time elapsed between two sessions
 psych::describeBy(list(
     T1 = s2$enjoy1,
     T8 = s2$enjoy8,
@@ -314,8 +316,6 @@ t.test(time_elap ~ treat, s2, var.equal = TRUE)
 t.test(lack_autnm ~ treat, s2, var.equal = TRUE)
 
 # Study 3 ####
-
-## Method ====
 
 # Load data
 s3 <- haven::read_sav("Data_Preference.sav")
@@ -364,15 +364,13 @@ cor.test(s3$autnm1, s3$autnm2)
 # Variable construction
 s3 <- s3 %>%
 mutate(
-    # recovery measure
+    # spontaneous recovery
     recover = rowMeans(select(., recover1, recover2), na.rm = TRUE),
-    # perceived lack of autonomy of choice
+    # perceived lack of autonomy
     lack_autnm = rowMeans(select(., autnm1, autnm2), na.rm = TRUE),
     # difference in liking between first and second evaluated item
     like_diff = rowMeans(select(., liking1_1, liking1_2, liking1_3) -
-    select(., liking2_1, liking2_2, liking2_3), na.rm = TRUE)
-) %>%
-mutate(
+    select(., liking2_1, liking2_2, liking2_3), na.rm = TRUE),
     # difference in liking between eaten and uneaten item
     relpref_eaten = case_when(
         (item_eaten == "Alphabet Cookies" &
@@ -382,6 +380,9 @@ mutate(
         TRUE ~ -like_diff
     )
 )
+
+# Summary statistics of lack_autnm
+psych::describe(s3$lack_autnm)
 
 # Correlation between relpref_eaten and lack_autnm
 cor.test(s3$relpref_eaten, s3$lack_autnm)
@@ -396,6 +397,8 @@ summary(s3_lm1)
 # Model 2, controlling for item_eaten
 s3_lm2 <- lm(recover ~ relpref_eaten + enjoy8 + item_eaten, s3)
 
+summary(s3_lm2)
+
 # Table 3
 modelsummary(
     list(s3_lm1, s3_lm2),
@@ -405,7 +408,7 @@ modelsummary(
         "(Intercept)" = "Constant",
         "relpref_eaten" = "Relative Preference",
         "enjoy8" = "Previous Enjoyment",
-        "item_eatenAnimal Cookies" = "Item Eaten"
+        "item_eatenAnimal Cookies" = "Item Eaten"        
     ),
     title = "Table 3. Results of Study 3",
     notes = "Numbers in parentheses represent standard errors.",
@@ -413,8 +416,6 @@ modelsummary(
 )
 
 # Study 4 ####
-
-## Method ====
 
 # Load data
 s4 <- haven::read_sav("Data_Behavior-Measure.sav") %>%
@@ -427,10 +428,10 @@ psych::describe(s4$age)
 
 # Factor treatment variable
 s4$treat  <- factor(s4$treat, levels = c(0, 1),
-labels = c("Control", "Imposed Choice"))
+labels = c("Control", "Substituted Choice"))
 
-# Construct variable measuring time elapsed until recovery measure
-s4$time_elap  <- difftime(s4$StartDate_2nd, s4$StartDate_1st, units = "hours")
+# Construct variable measuring time elapsed between two sessions
+s4$time_elap  <- difftime(s4$time2, s4$time1, units = "hours")
 
 ## Figure 3 ====
 
@@ -459,7 +460,7 @@ scale_x_discrete(labels = paste0("T", 1:8)) +
 scale_y_continuous(labels = scales::label_number(accuracy = 0.1)) +
 labs(
     x = "Enjoyment Rating Overtime",
-    y = "Mean Enjoyment Rating"
+    y = "Average Enjoyment Rating"
 ) +
 ggpubr::theme_pubr() +
 theme(
@@ -468,7 +469,7 @@ theme(
     legend.title = element_blank()
 )
 
-# Figure 3B: Recovery
+# Figure 3B: Spontaneous recovery
 fig3_b <- s4 %>%
 ggplot(aes(treat, play_count)) +
 geom_violin() +
@@ -500,13 +501,18 @@ fig3 <- fig3_a + fig3_b +
 plot_annotation(
     tag_levels = "A",
     title =
-    "Hedonic decline (A) and recovery (on average three and half hours later; B), Study 4",
-    caption = "Error bars represent ± 1 standard error."
+    "Hedonic Decline (A) and Spontaneous Recovery (B), Study 4",
+    caption =
+    "On average, spontaneous recovery was measured around 3 hours after T8.\nError bars represent ± 1 standard error."
 ) &
 theme(
     plot.title = element_text(size = 14),
     plot.caption = element_text(size = 12)
 )
+
+# Export figure
+ggsave(plot = fig3, filename = "figures/fig3.png",
+width = 18, height = 9)
 
 ## Table 4 ====
 
@@ -515,13 +521,13 @@ s4_pos1 <- glm(play_count ~ treat + enjoy8, family = poisson(), s4)
 
 summary(s4_pos1)
 
-# Model 2, poisson regression controlling for time elapsed until recovery measure
+# Model 2, poisson regression controlling for time elapsed between two sessions
 s4_pos2 <- glm(play_count ~ treat + enjoy8 + time_elap, family = poisson(), s4)
 
 # Model 3, OLS regression
 s4_lm1 <- lm(play_count ~ treat + enjoy8, s4)
 
-# Model 4, OLS regression controlling for time elapsed until recovery measure
+# Model 4, OLS regression controlling for time elapsed between two sessions
 s4_lm2 <- lm(play_count ~ treat + enjoy8 + time_elap, s4)
 
 # Table 4
@@ -536,7 +542,7 @@ modelsummary(
     gof_omit = "^R2$|AIC|BIC|Log.Lik.|F|RMSE",
     coef_map = c(
         "(Intercept)" = "Constant",
-        "treatImposed Choice" = "Imposed Choice",
+        "treatSubstituted Choice" = "Substituted Choice",
         "enjoy8" = "Previous Enjoyment",
         "time_elap" = "Time Elapsed"
     ),
@@ -548,7 +554,7 @@ modelsummary(
 ## Other Analyses ====
 
 # T1 & T8 enjoyment ratings, and
-# time elapsed until recovery measure
+# time elapsed between two sessions
 psych::describeBy(list(
     T1 = s4$enjoy1,
     T8 = s4$enjoy8,
@@ -563,3 +569,5 @@ t.test(enjoy1 ~ treat, s4, var.equal = TRUE)
 t.test(enjoy8 ~ treat, s4, var.equal = TRUE)
 
 t.test(time_elap ~ treat, s4, var.equal = TRUE)
+
+# Pretests ####
