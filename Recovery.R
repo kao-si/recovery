@@ -9,7 +9,8 @@ library(modelsummary)
 # Study 1 ####
 
 # Load data
-s1 <- haven::read_sav("Data_Main-Effect-Choice.sav") %>% filter(failed_ins == 0)
+s1 <- haven::read_sav("Data_Study1_ForcedChoice.sav") %>%
+filter(failed_ins == 0)
 
 # Summary statistics of gender and age
 table(s1$sex)
@@ -117,7 +118,7 @@ theme(
 )
 
 # Export figure
-ggsave(plot = fig1, filename = "figures/fig1.png",
+ggsave(plot = fig1, filename = "_figures/fig1.png",
 width = 18, height = 9)
 
 ## Table 1 ====
@@ -162,7 +163,7 @@ t.test(enjoy8 ~ treat, s1, var.equal = TRUE)
 # Study 2 ####
 
 # Load data
-s2 <- haven::read_sav("Data_Main-Effect.sav") %>% filter(failed_ins == 0)
+s2 <- haven::read_sav("Data_Study2_SubChoice.sav") %>% filter(failed_ins == 0)
 
 # Summary statistics of gender and age
 table(s2$male)
@@ -264,7 +265,7 @@ theme(
 )
 
 # Export figure
-ggsave(plot = fig2, filename = "figures/fig2.png",
+ggsave(plot = fig2, filename = "_figures/fig2.png",
 width = 18, height = 9)
 
 ## Table 2 ====
@@ -318,7 +319,7 @@ t.test(lack_autnm ~ treat, s2, var.equal = TRUE)
 # Study 3 ####
 
 # Load data
-s3 <- haven::read_sav("Data_Preference.sav")
+s3 <- haven::read_sav("Data_Study3_Preference.sav")
 
 # Summary statistics of gender and age
 table(s3$male)
@@ -418,7 +419,7 @@ modelsummary(
 # Study 4 ####
 
 # Load data
-s4 <- haven::read_sav("Data_Behavior-Measure.sav") %>%
+s4 <- haven::read_sav("Data_Study4_BehMeasure.sav") %>%
 filter(!is.na(play_count))
 
 # Summary statistics of gender and age
@@ -511,7 +512,7 @@ theme(
 )
 
 # Export figure
-ggsave(plot = fig3, filename = "figures/fig3.png",
+ggsave(plot = fig3, filename = "_figures/fig3.png",
 width = 18, height = 9)
 
 ## Table 4 ====
@@ -569,5 +570,3 @@ t.test(enjoy1 ~ treat, s4, var.equal = TRUE)
 t.test(enjoy8 ~ treat, s4, var.equal = TRUE)
 
 t.test(time_elap ~ treat, s4, var.equal = TRUE)
-
-# Pretests ####
