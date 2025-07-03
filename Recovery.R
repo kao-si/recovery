@@ -1,10 +1,12 @@
 
-# Lack of Autonomy and Spontaneous Recovery from Hedonic Decline
+# Lack of Autonomy and Spontaneous Recovery of Hedonic Response
 
 # Load packages
 library(tidyverse)
 library(patchwork)
 library(modelsummary)
+library(lme4)
+library(lmerTest)
 
 # Study 1 ####
 
@@ -60,7 +62,7 @@ summarize(
 ) %>%
 ungroup()
 
-# Figure 1A: Hedonic decline
+# Figure 1A: Trajectory of enjoyment ratings
 fig1_a <- s1_mean %>%
 filter(time != "recover") %>%
 ggplot(aes(time, mean, group = treat)) +
@@ -72,7 +74,7 @@ scale_x_discrete(labels = paste0("T", 1:8)) +
 scale_y_continuous(limits = c(2.5, 5.7),
 labels = scales::label_number(accuracy = 0.1)) +
 labs(
-    x = "Enjoyment Rating Overtime",
+    x = "Enjoyment Rating Sequence",
     y = "Average Enjoyment Rating"
 ) +
 ggpubr::theme_pubr() +
@@ -94,7 +96,7 @@ scale_x_discrete(labels = c("T8", "Recovery")) +
 scale_y_continuous(limits = c(2.5, 5.7),
 labels = scales::label_number(accuracy = 0.1)) +
 labs(
-    x = "Enjoyment Rating Overtime",
+    x = "Enjoyment Rating Sequence",
     y = "Average Enjoyment Rating"
 ) +
 ggpubr::theme_pubr() +
@@ -107,14 +109,10 @@ theme(
 # Combine Figures 1A and 1B
 fig1 <- fig1_a + fig1_b +
 plot_annotation(
-    tag_levels = "A",
-    title = "Hedonic Decline (A) and Spontaneous Recovery (B), Study 1",
-    caption =
-    "Spontaneous recovery was measured about 10 minutes after T8.\nError bars represent ± 1 standard error."
+    tag_levels = "A"
 ) &
 theme(
-    plot.title = element_text(size = 14),
-    plot.caption = element_text(size = 12)
+    plot.title = element_text(size = 14)
 )
 
 # Export figure
@@ -159,6 +157,50 @@ psych::describeBy(list(T1 = s1$enjoy1, T8 = s1$enjoy8), group = s1$treat)
 t.test(enjoy1 ~ treat, s1, var.equal = TRUE)
 
 t.test(enjoy8 ~ treat, s1, var.equal = TRUE)
+
+# Investigate if there is a difference in trajectory of enjoyment ratings
+# between the two conditions
+
+# Pivot longer
+s1_long <- s1 %>%
+    pivot_longer(
+        cols = c(enjoy1:enjoy8),
+        names_to = "time",
+        values_to = "rating"
+    ) %>%
+    mutate(time = as.numeric(str_extract(time, "\\d+")))
+
+# Mixed model
+
+# All ratings
+s1_lmx1 <- lmer(rating ~ time * treat + (1 | id), data = s1_long)
+
+summary(s1_lmx1)
+
+# Ratings after T4
+s1_lmx2 <- lmer(rating ~ time * treat + (1 | id),
+data = filter(s1_long, time > 4))
+
+summary(s1_lmx2)
+
+# Table A1
+modelsummary(
+    list(
+        "(1)\nAll Ratings" = s1_lmx1,
+        "(2)\nRatings after T4" = s1_lmx2
+    ),
+    stars = c("*" = .05, "**" = .01, "***" = .001),
+    gof_omit = "AIC|BIC|Log.Lik.|F|RMSE|ICC",
+    coef_map = c(
+        "(Intercept)" = "Constant",
+        "time" = "Rating Sequence",
+        "treatForced Choice" = "Forced Choice",
+        "time:treatForced Choice" = "Interaction"
+    ),
+    title = "Table A1. Study 1",
+    notes = "Numbers in parentheses represent standard errors.",
+    output = "markdown"
+)
 
 # Study 2 ####
 
@@ -207,7 +249,7 @@ summarize(
 ) %>%
 ungroup()
 
-# Figure 2A: Hedonic decline
+# Figure 2A: Trajectory of enjoyment ratings
 fig2_a <- s2_mean %>%
 filter(time != "recover") %>%
 ggplot(aes(time, mean, group = treat)) +
@@ -219,7 +261,7 @@ scale_x_discrete(labels = paste0("T", 1:8)) +
 scale_y_continuous(limits = c(2.6, 4.3),
 labels = scales::label_number(accuracy = 0.1)) +
 labs(
-    x = "Enjoyment Rating Overtime",
+    x = "Enjoyment Rating Sequence",
     y = "Average Enjoyment Rating"
 ) +
 ggpubr::theme_pubr() +
@@ -241,7 +283,7 @@ scale_x_discrete(labels = c("T8", "Recovery")) +
 scale_y_continuous(limits = c(2.6, 4.3),
 labels = scales::label_number(accuracy = 0.1)) +
 labs(
-    x = "Enjoyment Rating Overtime",
+    x = "Enjoyment Rating Sequence",
     y = "Average Enjoyment Rating"
 ) +
 ggpubr::theme_pubr() +
@@ -254,14 +296,10 @@ theme(
 # Combine Figures 2A and 2B
 fig2 <- fig2_a + fig2_b +
 plot_annotation(
-    tag_levels = "A",
-    title = "Hedonic Decline (A) and Spontaneous Recovery (B), Study 2",
-    caption =
-    "On average, spontaneous recovery was measured around 3 hours after T8.\nError bars represent ± 1 standard error."
+    tag_levels = "A"
 ) &
 theme(
-    plot.title = element_text(size = 14),
-    plot.caption = element_text(size = 12)
+    plot.title = element_text(size = 14)
 )
 
 # Export figure
@@ -315,6 +353,50 @@ t.test(enjoy8 ~ treat, s2, var.equal = TRUE)
 t.test(time_elap ~ treat, s2, var.equal = TRUE)
 
 t.test(lack_autnm ~ treat, s2, var.equal = TRUE)
+
+# Investigate if there is a difference in trajectory of enjoyment ratings
+# between the two conditions
+
+# Pivot longer
+s2_long <- s2 %>%
+    pivot_longer(
+        cols = c(enjoy1:enjoy8),
+        names_to = "time",
+        values_to = "rating"
+    ) %>%
+    mutate(time = as.numeric(str_extract(time, "\\d+")))
+
+# Mixed model
+
+# All ratings
+s2_lmx1 <- lmer(rating ~ time * treat + (1 | id), data = s2_long)
+
+summary(s2_lmx1)
+
+# Ratings after T4
+s2_lmx2 <- lmer(rating ~ time * treat + (1 | id),
+data = filter(s2_long, time > 4))
+
+summary(s2_lmx2)
+
+# Table A2
+modelsummary(
+    list(
+        "(1)\nAll Ratings" = s2_lmx1,
+        "(2)\nRatings after T4" = s2_lmx2
+    ),
+    stars = c("*" = .05, "**" = .01, "***" = .001),
+    gof_omit = "AIC|BIC|Log.Lik.|F|RMSE|ICC",
+    coef_map = c(
+        "(Intercept)" = "Constant",
+        "time" = "Rating Sequence",
+        "treatSubstituted Choice" = "Substituted Choice",
+        "time:treatSubstituted Choice" = "Interaction"
+    ),
+    title = "Table A2. Study 2",
+    notes = "Numbers in parentheses represent standard errors.",
+    output = "markdown"
+)
 
 # Study 3 ####
 
@@ -409,7 +491,7 @@ modelsummary(
         "(Intercept)" = "Constant",
         "relpref_eaten" = "Relative Preference",
         "enjoy8" = "Previous Enjoyment",
-        "item_eatenAnimal Cookies" = "Item Eaten"        
+        "item_eatenAnimal Cookies" = "Item Eaten"
     ),
     title = "Table 3. Results of Study 3",
     notes = "Numbers in parentheses represent standard errors.",
@@ -450,7 +532,7 @@ summarize(
 ) %>%
 ungroup()
 
-# Figure 3A: Hedonic decline
+# Figure 3A: Trajectory of enjoyment ratings
 fig3_a <- s4_mean %>%
 ggplot(aes(time, mean, group = treat)) +
 geom_line(aes(linetype = treat), linewidth = 0.8, show.legend = FALSE) +
@@ -460,7 +542,7 @@ scale_linetype_manual(values = c("dashed", "solid")) +
 scale_x_discrete(labels = paste0("T", 1:8)) +
 scale_y_continuous(labels = scales::label_number(accuracy = 0.1)) +
 labs(
-    x = "Enjoyment Rating Overtime",
+    x = "Enjoyment Rating Sequence",
     y = "Average Enjoyment Rating"
 ) +
 ggpubr::theme_pubr() +
@@ -500,15 +582,10 @@ theme(
 # Combine Figures 3A and 3B
 fig3 <- fig3_a + fig3_b +
 plot_annotation(
-    tag_levels = "A",
-    title =
-    "Hedonic Decline (A) and Spontaneous Recovery (B), Study 4",
-    caption =
-    "On average, spontaneous recovery was measured around 3 hours after T8.\nError bars represent ± 1 standard error."
+    tag_levels = "A"
 ) &
 theme(
-    plot.title = element_text(size = 14),
-    plot.caption = element_text(size = 12)
+    plot.title = element_text(size = 14)
 )
 
 # Export figure
@@ -570,3 +647,47 @@ t.test(enjoy1 ~ treat, s4, var.equal = TRUE)
 t.test(enjoy8 ~ treat, s4, var.equal = TRUE)
 
 t.test(time_elap ~ treat, s4, var.equal = TRUE)
+
+# Investigate if there is a difference in trajectory of enjoyment ratings
+# between the two conditions
+
+# Pivot longer
+s4_long <- s4 %>%
+    pivot_longer(
+        cols = c(enjoy1:enjoy8),
+        names_to = "time",
+        values_to = "rating"
+    ) %>%
+    mutate(time = as.numeric(str_extract(time, "\\d+")))
+
+# Mixed model
+
+# All ratings
+s4_lmx1 <- lmer(rating ~ time * treat + (1 | ResponseId), data = s4_long)
+
+summary(s4_lmx1)
+
+# Ratings after T4
+s4_lmx2 <- lmer(rating ~ time * treat + (1 | ResponseId),
+data = filter(s4_long, time > 4))
+
+summary(s4_lmx2)
+
+# Table A3
+modelsummary(
+    list(
+        "(1)\nAll Ratings" = s4_lmx1,
+        "(2)\nRatings after T4" = s4_lmx2
+    ),
+    stars = c("*" = .05, "**" = .01, "***" = .001),
+    gof_omit = "AIC|BIC|Log.Lik.|F|RMSE|ICC",
+    coef_map = c(
+        "(Intercept)" = "Constant",
+        "time" = "Rating Sequence",
+        "treatSubstituted Choice" = "Substituted Choice",
+        "time:treatSubstituted Choice" = "Interaction"
+    ),
+    title = "Table A3. Study 4",
+    notes = "Numbers in parentheses represent standard errors.",
+    output = "markdown"
+)

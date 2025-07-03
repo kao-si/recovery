@@ -1,5 +1,5 @@
 
-# Lack of Autonomy and Spontaneous Recovery from Hedonic Decline
+# Lack of Autonomy and Spontaneous Recovery of Hedonic Response
 # Study Pretests
 
 # Load packages
