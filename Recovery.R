@@ -68,7 +68,6 @@ filter(time != "recover") %>%
 ggplot(aes(time, mean, group = treat)) +
 geom_line(aes(linetype = treat), linewidth = 0.8, show.legend = FALSE) +
 geom_point(aes(shape = treat), size = 5) +
-geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.1) +
 scale_linetype_manual(values = c("dashed", "solid")) +
 scale_x_discrete(labels = paste0("T", 1:8)) +
 scale_y_continuous(limits = c(2.5, 5.7),
@@ -81,7 +80,8 @@ ggpubr::theme_pubr() +
 theme(
     text = element_text(size = 14),
     legend.text = element_text(size = 14),
-    legend.title = element_blank()
+    legend.title = element_blank(),
+    axis.ticks.length = unit(-0.15, "cm")
 )
 
 # Figure 1B: Spontaneous recovery
@@ -90,7 +90,6 @@ filter(time %in% c("enjoy8", "recover")) %>%
 ggplot(aes(time, mean, group = treat)) +
 geom_line(aes(linetype = treat), linewidth = 0.8, show.legend = FALSE) +
 geom_point(aes(shape = treat), size = 5) +
-geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.03) +
 scale_linetype_manual(values = c("dashed", "solid")) +
 scale_x_discrete(labels = c("T8", "Recovery")) +
 scale_y_continuous(limits = c(2.5, 5.7),
@@ -103,7 +102,8 @@ ggpubr::theme_pubr() +
 theme(
     text = element_text(size = 14),
     legend.text = element_text(size = 14),
-    legend.title = element_blank()
+    legend.title = element_blank(),
+    axis.ticks.length = unit(-0.15, "cm")
 )
 
 # Combine Figures 1A and 1B
@@ -255,7 +255,6 @@ filter(time != "recover") %>%
 ggplot(aes(time, mean, group = treat)) +
 geom_line(aes(linetype = treat), linewidth = 0.8, show.legend = FALSE) +
 geom_point(aes(shape = treat), size = 5) +
-geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.1) +
 scale_linetype_manual(values = c("dashed", "solid")) +
 scale_x_discrete(labels = paste0("T", 1:8)) +
 scale_y_continuous(limits = c(2.6, 4.3),
@@ -268,7 +267,8 @@ ggpubr::theme_pubr() +
 theme(
     text = element_text(size = 14),
     legend.text = element_text(size = 14),
-    legend.title = element_blank()
+    legend.title = element_blank(),
+    axis.ticks.length = unit(-0.15, "cm")
 )
 
 # Figure 2B: Spontaneous recovery
@@ -277,7 +277,6 @@ filter(time %in% c("enjoy8", "recover")) %>%
 ggplot(aes(time, mean, group = treat)) +
 geom_line(aes(linetype = treat), linewidth = 0.8, show.legend = FALSE) +
 geom_point(aes(shape = treat), size = 5) +
-geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.03) +
 scale_linetype_manual(values = c("dashed", "solid")) +
 scale_x_discrete(labels = c("T8", "Recovery")) +
 scale_y_continuous(limits = c(2.6, 4.3),
@@ -290,7 +289,8 @@ ggpubr::theme_pubr() +
 theme(
     text = element_text(size = 14),
     legend.text = element_text(size = 14),
-    legend.title = element_blank()
+    legend.title = element_blank(),
+    axis.ticks.length = unit(-0.15, "cm")
 )
 
 # Combine Figures 2A and 2B
@@ -537,7 +537,6 @@ fig3_a <- s4_mean %>%
 ggplot(aes(time, mean, group = treat)) +
 geom_line(aes(linetype = treat), linewidth = 0.8, show.legend = FALSE) +
 geom_point(aes(shape = treat), size = 5) +
-geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0.1) +
 scale_linetype_manual(values = c("dashed", "solid")) +
 scale_x_discrete(labels = paste0("T", 1:8)) +
 scale_y_continuous(labels = scales::label_number(accuracy = 0.1)) +
@@ -549,7 +548,8 @@ ggpubr::theme_pubr() +
 theme(
     text = element_text(size = 14),
     legend.text = element_text(size = 14),
-    legend.title = element_blank()
+    legend.title = element_blank(),
+    axis.ticks.length = unit(-0.15, "cm")
 )
 
 # Figure 3B: Spontaneous recovery
@@ -558,16 +558,6 @@ ggplot(aes(treat, play_count)) +
 geom_violin() +
 stat_summary(geom = "point", aes(shape = treat), fun = "mean",
 size = 5, show.legend = FALSE) +
-stat_summary(geom = "errorbar",
-fun.data = function(x) {
-    se_x <- plotrix::std.error(x, na.rm = TRUE)
-    data.frame(
-        ymin = mean(x) - se_x,
-        ymax = mean(x) + se_x
-    )
-},
-width = 0.03
-) +
 labs(
     x = "Treatment Condition",
     y = "Play Count"
@@ -576,7 +566,8 @@ ggpubr::theme_pubr() +
 theme(
     text = element_text(size = 14),
     legend.text = element_text(size = 14),
-    legend.title = element_blank()
+    legend.title = element_blank(),
+    axis.ticks.length = unit(-0.15, "cm")
 )
 
 # Combine Figures 3A and 3B
